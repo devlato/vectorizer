@@ -1,0 +1,76 @@
+{
+  "name": "vectorizer",
+  "version": "1.0.0",
+  "description": "Image Editing Extension for Canva, that vectorizes a given raster image",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "homepage": "https://github.com/devlato/vectorizer",
+  "bugs": {
+    "url": "https://github.com/devlato/vectorizer/issues"
+  },
+  "scripts": {
+    "format": "prettier --write src .jest",
+    "lint": "eslint --ext .ts,.tsx,.js,.jsx,.json -c .eslintrc.js .",
+    "test": "cross-env NODE_ENV=test jest",
+    "test:ci": "npm run clean:coverage && cross-env NODE_ENV=test jest --coverage",
+    "clean:build": "rimraf dist",
+    "clean:coverage": "rimraf coverage",
+    "clean": "npm run clean:build & npm run clean:coverage && wait",
+    "build:code": "cross-env NODE_ENV=production rollup -c rollup.config.js",
+    "build": "npm run clean:build && npm run build:code",
+    "pre-push": "npm run lint && npm run test:coverage",
+    "prepublish": "npm run clean && npm run build"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx,json}": ["eslint -c ./.eslintrc.js --fix", "jest —-bail --color --findRelatedTests"],
+    "./*.{ts,tsx,js,jsx,json}": ["eslint -c ./.eslintrc.js --fix", "jest —-bail --color --findRelatedTests"]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run lint && npm run test && npm run build"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devlato/vectorizer.git"
+  },
+  "keywords": ["imagetracerjs", "vectorizer", "canva", "image", "editing", "extension", "raster", "vector"],
+  "author": "devlato <npm@devlato.com> (https://devlato.com/)",
+  "license": "MIT",
+  "files": ["package.json", "README.md", "LICENSE", "dist"],
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
+    "@canva/editing-extensions-api-typings": "0.0.74-alpha.0",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.17",
+    "@types/prettier": "^1.19.1",
+    "@typescript-eslint/eslint-plugin": "^2.12.0",
+    "@typescript-eslint/parser": "^2.12.0",
+    "babel-loader": "^8.1.0",
+    "coveralls": "^3.0.11",
+    "cross-env": "^7.0.2",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "husky": "^4.2.3",
+    "jest": "^25.2.3",
+    "lint-staged": "^10.0.9",
+    "prettier": "^2.0.2",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.2.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-terser": "^5.3.0",
+    "rollup-plugin-typescript2": "^0.27.0",
+    "ts-jest": "^25.2.1",
+    "ts-loader": "^6.2.2",
+    "ts-node": "^8.8.1",
+    "typescript": "^3.8.3"
+  },
+  "engines": {
+    "node": ">= 8",
+    "npm": ">= 4"
+  }
+}

@@ -1,0 +1,34 @@
+version: '2'
+checks:
+  argument-count:
+    enabled: false
+  complex-logic:
+    enabled: false
+  file-lines:
+    enabled: true
+    config:
+      threshold: 250
+  method-complexity:
+    enabled: true
+    config:
+      threshold: 5
+  method-count:
+    enabled: true
+    config:
+      threshold: 20
+  method-lines:
+    enabled: true
+    config:
+      threshold: 25
+exclude_patterns:
+  - 'dist/'
+  - 'docs/'
+  - 'storybook/'
+  - 'src/tests'
+  - 'src/stories'
+  - 'node_modules/'
+plugins:
+  eslint:
+    enabled: false
+  nodesecurity:
+    enabled: false

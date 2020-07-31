@@ -1,0 +1,11 @@
+.idea/
+docs/
+dist/
+coverage/
+node_modules/
+*.log
+.editorconfig
+tsconfig.tsbuildinfo
+CODEOWNERS
+**/.DS_Store
+.npmrc
