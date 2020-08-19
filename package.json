@@ -16,9 +16,7 @@
     "clean:build": "rimraf dist",
     "clean:coverage": "rimraf coverage",
     "clean": "npm run clean:build & npm run clean:coverage && wait",
-    "build:code:main": "cross-env NODE_ENV=production rollup -c rollup.config.main.js",
-    "build:code:webworker": "cross-env NODE_ENV=production rollup -c rollup.config.webworker.js",
-    "build:code": "npm run build:code:main & npm run build:code:webworker & wait",
+    "build:code": "cross-env NODE_ENV=production rollup -c rollup.config.js",
     "build": "npm run clean:build && npm run build:code",
     "pre-push": "npm run lint && npm run test:coverage",
     "prepublish": "npm run clean && npm run build"
