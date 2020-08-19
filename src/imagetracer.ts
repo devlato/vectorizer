@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import { UnreachableError } from './utils';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-import imageTracer from './imagetracer_v1.2.6';
+import ImageTracer from './imagetracer_v1.2.6';
 
 export type SVGString = string & { __svgString: never };
 export const isSVGString = (value: unknown): value is SVGString => typeof value === 'string' && value.includes('svg');
@@ -876,6 +874,8 @@ export class OptionsBuilder {
     };
   }
 }
+
+const imageTracer = new ImageTracer();
 
 export const imageToSVG = imageTracer.imageToSVG as (
   imageURL: string,

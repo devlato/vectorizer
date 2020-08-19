@@ -4,6 +4,13 @@ import { presets } from './presets';
 import { checkExists } from './utils';
 import { createPreviewCanvas, setCanvasSize } from 'canvas';
 
+const WEB_WORKER_URL =
+  'https://apps.canva-apps-dev.com/BADa0xBSJXo/UADa06HQcTs/AADzB-VLWPU/2/AADzB-VLWPU_pSOai8/html/9fd3fa7e-8824-44e3-a8f3-150333905736.html?lib=0.0.83-alpha.0&libBase=https%3A%2F%2Fapps.canva-apps-dev.com%2Fbundle%2Fv1%2Fediting-extensions-api.&v=2';
+
+const webWorker = new Worker(WEB_WORKER_URL);
+
+webWorker.postMessage({ text: 'Test' });
+
 export type State = {
   presetId: string | undefined;
   options: OptionsBuilder;
