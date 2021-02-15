@@ -1,5 +1,5 @@
 import { PresetId } from '@canva/editing-extensions-api-typings';
-import { HumanReadableInputOptions, RGBA } from './imagetracer';
+import { HumanReadableInputOptions, RGBA } from 'imagetracer';
 
 export type Preset = {
   id: PresetId;

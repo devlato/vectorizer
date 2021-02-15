@@ -1,71 +1,29 @@
 /* eslint-disable @typescript-eslint/camelcase */
-import { UnreachableError } from './utils';
-import ImageTracer from './imagetracer_v1.2.6';
+import ImageTracer, {
+  BlurRadius,
+  ColorComponentValue,
+  ColorSampling,
+  DEFAULT_OPTIONS,
+  ImageData,
+  Layering,
+  Options,
+  Palette,
+  PaletteColor,
+  PointRadius,
+  SVGString,
+} from 'imagetracer_v1.2.6';
+import { UnreachableError } from 'utils';
 
-export type SVGString = string & { __svgString: never };
-export const isSVGString = (value: unknown): value is SVGString => typeof value === 'string' && value.includes('svg');
+export type HumanReadableInputOptions = Partial<{
+  tracing: Partial<HumanReadableOptions['tracing']>;
+  colorQuantization: Partial<HumanReadableOptions['colorQuantization']>;
+  layering: HumanReadableOptions['layering'];
+  svgRendering: Partial<HumanReadableOptions['svg']>;
+  blurPreprocessing: Partial<HumanReadableOptions['blur']>;
+  debug: Partial<HumanReadableOptions['debug']>;
+  palette: HumanReadableOptions['palette'];
+}>;
 
-export type ResultCallback = (svgString: SVGString) => void;
-export type CanvasCallback = (canvas: HTMLCanvasElement) => void;
-export type TraceData = {
-  layers: TraceDataLayer;
-};
-export type TraceDataLayer = TraceDataLayerItem[];
-export type TraceDataLayerItem = {
-  segments: TraceDataLayerItemSegment[];
-};
-export type TraceDataLayerItemSegment = {
-  type: TraceDataLayerItemSegmentType;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  x3?: number;
-  y3?: number;
-};
-export type TraceDataLayerItemSegmentType = 'L';
-export type ImageData = {
-  data: Uint8ClampedArray;
-  height: number;
-  width: number;
-};
-export type Options = {
-  // Tracing
-  corsenabled: boolean;
-  ltres: number;
-  qtres: number;
-  pathomit: number;
-  rightangleenhance: boolean;
-
-  // Color quantization
-  colorsampling: 0 | 1 | 2;
-  numberofcolors: number;
-  mincolorratio: number;
-  colorquantcycles: number;
-
-  // Layering method
-  layering: 0 | 1;
-
-  // SVG rendering
-  strokewidth: number;
-  linefilter: boolean;
-  scale: number;
-  roundcoords: number;
-  viewbox: boolean;
-  desc: boolean;
-
-  // Blur
-  blurradius: 0 | 1 | 2 | 3 | 4 | 5;
-  blurdelta: number;
-
-  // Debug
-  layercontainerid: string | undefined;
-  lcpr: Exclude<number, 0> | 0;
-  qcpr: Exclude<number, 0> | 0;
-
-  // Palette
-  pal: Palette | undefined;
-};
 export type HumanReadableOptions = Readonly<{
   tracing: Readonly<{
     enableCORS: boolean;
@@ -100,279 +58,6 @@ export type HumanReadableOptions = Readonly<{
   }>;
   palette: Palette | undefined;
 }>;
-export type HumanReadableInputOptions = Partial<{
-  tracing: Partial<HumanReadableOptions['tracing']>;
-  colorQuantization: Partial<HumanReadableOptions['colorQuantization']>;
-  layering: HumanReadableOptions['layering'];
-  svgRendering: Partial<HumanReadableOptions['svg']>;
-  blurPreprocessing: Partial<HumanReadableOptions['blur']>;
-  debug: Partial<HumanReadableOptions['debug']>;
-  palette: HumanReadableOptions['palette'];
-}>;
-export type Palette = PaletteColor[];
-export type PaletteColor = {
-  r: ColorComponentValue;
-  g: ColorComponentValue;
-  b: ColorComponentValue;
-  a: ColorComponentValue;
-};
-export type ColorComponentValue =
-  | 0
-  | 1
-  | 2
-  | 3
-  | 4
-  | 5
-  | 6
-  | 7
-  | 8
-  | 9
-  | 10
-  | 11
-  | 12
-  | 13
-  | 14
-  | 15
-  | 16
-  | 17
-  | 18
-  | 19
-  | 20
-  | 21
-  | 22
-  | 23
-  | 24
-  | 25
-  | 26
-  | 27
-  | 28
-  | 29
-  | 30
-  | 31
-  | 32
-  | 33
-  | 34
-  | 35
-  | 36
-  | 37
-  | 38
-  | 39
-  | 40
-  | 41
-  | 42
-  | 43
-  | 44
-  | 45
-  | 46
-  | 47
-  | 48
-  | 49
-  | 50
-  | 51
-  | 52
-  | 53
-  | 54
-  | 55
-  | 56
-  | 57
-  | 58
-  | 59
-  | 60
-  | 61
-  | 62
-  | 63
-  | 64
-  | 65
-  | 66
-  | 67
-  | 68
-  | 69
-  | 70
-  | 71
-  | 72
-  | 73
-  | 74
-  | 75
-  | 76
-  | 77
-  | 78
-  | 79
-  | 80
-  | 81
-  | 82
-  | 83
-  | 84
-  | 85
-  | 86
-  | 87
-  | 88
-  | 89
-  | 90
-  | 91
-  | 92
-  | 93
-  | 94
-  | 95
-  | 96
-  | 97
-  | 98
-  | 99
-  | 100
-  | 101
-  | 102
-  | 103
-  | 104
-  | 105
-  | 106
-  | 107
-  | 108
-  | 109
-  | 110
-  | 111
-  | 112
-  | 113
-  | 114
-  | 115
-  | 116
-  | 117
-  | 118
-  | 119
-  | 120
-  | 121
-  | 122
-  | 123
-  | 124
-  | 125
-  | 126
-  | 127
-  | 128
-  | 129
-  | 130
-  | 131
-  | 132
-  | 133
-  | 134
-  | 135
-  | 136
-  | 137
-  | 138
-  | 139
-  | 140
-  | 141
-  | 142
-  | 143
-  | 144
-  | 145
-  | 146
-  | 147
-  | 148
-  | 149
-  | 150
-  | 151
-  | 152
-  | 153
-  | 154
-  | 155
-  | 156
-  | 157
-  | 158
-  | 159
-  | 160
-  | 161
-  | 162
-  | 163
-  | 164
-  | 165
-  | 166
-  | 167
-  | 168
-  | 169
-  | 170
-  | 171
-  | 172
-  | 173
-  | 174
-  | 175
-  | 176
-  | 177
-  | 178
-  | 179
-  | 180
-  | 181
-  | 182
-  | 183
-  | 184
-  | 185
-  | 186
-  | 187
-  | 188
-  | 189
-  | 190
-  | 191
-  | 192
-  | 193
-  | 194
-  | 195
-  | 196
-  | 197
-  | 198
-  | 199
-  | 200
-  | 201
-  | 202
-  | 203
-  | 204
-  | 205
-  | 206
-  | 207
-  | 208
-  | 209
-  | 210
-  | 211
-  | 212
-  | 213
-  | 214
-  | 215
-  | 216
-  | 217
-  | 218
-  | 219
-  | 220
-  | 221
-  | 222
-  | 223
-  | 224
-  | 225
-  | 226
-  | 227
-  | 228
-  | 229
-  | 230
-  | 231
-  | 232
-  | 233
-  | 234
-  | 235
-  | 236
-  | 237
-  | 238
-  | 239
-  | 240
-  | 241
-  | 242
-  | 243
-  | 244
-  | 245
-  | 246
-  | 247
-  | 248
-  | 249
-  | 250
-  | 251
-  | 252
-  | 253
-  | 254
-  | 255;
 
 export const RGBA = (
   r: ColorComponentValue,
@@ -380,49 +65,6 @@ export const RGBA = (
   b: ColorComponentValue,
   a: ColorComponentValue,
 ): PaletteColor => ({ r, g, b, a });
-
-export type ColorSampling = 'disabled' | 'random' | 'deterministic';
-export type Layering = 'sequential' | 'parallel';
-export type BlurRadius = 1 | 2 | 3 | 4 | 5 | 'disabled';
-export type PointRadius = number | 'disabled';
-
-const DEFAULT_OPTIONS: Options = {
-  // Tracing
-  corsenabled: false,
-  ltres: 1,
-  qtres: 1,
-  pathomit: 8,
-  rightangleenhance: true,
-
-  // Color quantization
-  colorsampling: 2,
-  numberofcolors: 16,
-  mincolorratio: 0,
-  colorquantcycles: 3,
-
-  // Layering method
-  layering: 0,
-
-  // SVG rendering
-  strokewidth: 1,
-  linefilter: false,
-  scale: 1,
-  roundcoords: 1,
-  viewbox: false,
-  desc: false,
-
-  // Blur
-  blurradius: 0,
-  blurdelta: 20,
-
-  // Debug
-  layercontainerid: undefined,
-  lcpr: 0,
-  qcpr: 0,
-
-  // Palette
-  pal: undefined,
-};
 
 export class OptionsBuilder {
   private options: Options;
@@ -875,46 +517,5 @@ export class OptionsBuilder {
   }
 }
 
-const imageTracer = new ImageTracer();
-
-export const imageToSVG = imageTracer.imageToSVG as (
-  imageURL: string,
-  callback: ResultCallback,
-  options?: Options,
-) => void;
-
-export const imageToSVGAsync = async (imageURL: string, options?: Options): Promise<SVGString> =>
-  new Promise((resolve, reject) => {
-    try {
-      imageToSVG(
-        imageURL,
-        (svgString) => {
-          resolve(svgString);
-        },
-        options,
-      );
-    } catch (e) {
-      reject(e);
-    }
-  });
-
-export const imagedataToSVG = imageTracer.imagedataToSVG as (imageData: ImageData, options?: Options) => SVGString;
-
-export const imageToTracedata = imageTracer.imageToTracedata as (
-  imageURL: string,
-  callback: ResultCallback,
-  options?: Options,
-) => void;
-
-export const imagedataToTracedata = imageTracer.imagedataToTracedata as (
-  imageData: ImageData,
-  options?: Options,
-) => TraceData;
-
-export const appendSVGString = imageTracer.appendSVGString as (svgString: SVGString, parentID: string) => void;
-
-export const loadImage = imageTracer.loadImage as (imageURL: string, callback: CanvasCallback) => void;
-
-export const getImgdata = imageTracer.getImgdata as (canvas: HTMLCanvasElement) => ImageData;
-
-export const getsvgstring = imageTracer.getsvgstring as (traceData: TraceData, options?: Options) => SVGString;
+export const imageDataToSVGAsync = async (imageData: ImageData, options?: Options): Promise<SVGString> =>
+  new ImageTracer().imagedataToSVG(imageData, options);

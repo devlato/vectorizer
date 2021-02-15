@@ -1,88 +1,131 @@
-import { ControlName, PresetId, CanvaImageBlob } from '@canva/editing-extensions-api-typings';
-import { imageToSVGAsync, isSVGString, OptionsBuilder, SVGString } from './imagetracer';
-import { presets } from './presets';
-import { checkExists } from './utils';
-import { createPreviewCanvas, setCanvasSize } from 'canvas';
+import { PresetId, CanvaImageBlob } from '@canva/editing-extensions-api-typings';
+import { imageDataToSVGAsync, OptionsBuilder } from 'imagetracer';
+import { presets } from 'presets';
+import { checkExists } from 'utils';
 
-const WEB_WORKER_URL =
-  'https://apps.canva-apps-dev.com/BADa0xBSJXo/UADa06HQcTs/AADzB-VLWPU/2/AADzB-VLWPU_pSOai8/html/9fd3fa7e-8824-44e3-a8f3-150333905736.html?lib=0.0.83-alpha.0&libBase=https%3A%2F%2Fapps.canva-apps-dev.com%2Fbundle%2Fv1%2Fediting-extensions-api.&v=2';
-
-const webWorker = new Worker(WEB_WORKER_URL);
-
-webWorker.postMessage({ text: 'Test' });
+// const WEB_WORKER_URL =
+//   'https://apps.canva-apps-dev.com/BADa0xBSJXo/UADa06HQcTs/AADzB-VLWPU/2/AADzB-VLWPU_pSOai8/js/5aa4a11a-8254-4027-aecb-4ddf02b5f91b.js';
+//
+// const webWorker = new Worker(WEB_WORKER_URL);
+//
+// webWorker.postMessage({ text: 'Test' });
 
 export type State = {
-  presetId: string | undefined;
-  options: OptionsBuilder;
+  presetId: PresetId | undefined;
+  // options: OptionsBuilder;
 };
-
-const { imageHelpers } = window.canva;
-
-const displayPreview = ({
-  context,
-  preview,
-}: {
-  context: CanvasRenderingContext2D;
-  preview: HTMLImageElement | SVGString;
-}) => {
-  if (!isSVGString(preview)) {
-    context.drawImage(preview, 0, 0);
-    return;
-  }
-
-  const blob = new Blob([preview], { type: 'image/svg+xml' });
-  const svg = URL.createObjectURL(blob);
-  const img = document.createElement('img');
-  img.src = svg;
-  context.drawImage(img, 0, 0);
-};
-
-const renderPreview = async (imageURL: string, options: OptionsBuilder): Promise<SVGString> =>
-  imageToSVGAsync(imageURL, options.build());
 
 const getPreset = (presetId: PresetId) => presets.find((p) => p.id === presetId);
 
+const loadImageData = async (url: string, crossOrigin = false): Promise<ImageData> =>
+  new Promise((resolve, reject) => {
+    try {
+      const img = new Image();
+
+      if (crossOrigin) {
+        img.crossOrigin = 'anonymous';
+      }
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const context = canvas.getContext('2d');
+        if (context == null) {
+          throw new Error('Cannot initialize 2d context');
+        }
+
+        context.drawImage(img, 0, 0);
+        resolve(context.getImageData(0, 0, canvas.width, canvas.height));
+      };
+      img.src = url;
+    } catch (e) {
+      reject(e);
+    }
+  });
+
+const setStyles = () => {
+  const styleContainer = document.createElement('style');
+  styleContainer.type = 'text/css';
+  styleContainer.innerHTML = `
+body > div {
+  position: absolute;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+}
+  
+body > div > svg {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+`;
+  document.head.appendChild(styleContainer);
+};
+
+const createSvgContainer = () => {
+  const svgContainer = document.createElement('div');
+
+  document.body.appendChild(svgContainer);
+
+  return svgContainer;
+};
+
+const getPresetOptions = (presetId: PresetId | undefined) => {
+  const preset =
+    presetId != null
+      ? checkExists(getPreset(presetId as PresetId), `Preset with id "${presetId}" is not found`)
+      : undefined;
+
+  return preset != null
+    ? OptionsBuilder.fromHumanReadableOptions(preset.options).build()
+    : OptionsBuilder.create().build();
+};
+
+const loadCanvaBlob = async (image: CanvaImageBlob): Promise<ImageData> => ({
+  data: new Uint8ClampedArray(await image.blob.arrayBuffer()),
+  width: image.width,
+  height: image.height,
+});
+
 const canva = window.canva.init();
-canva.onReady(async ({ fullSizeImage, previewImage, previewSize, presetId }) => {
-  const img = fullSizeImage != null ? await imageHelpers.fromUrl(fullSizeImage.url) : undefined;
-  let previewImageURL: string | undefined;
-  let fullImage: CanvaImageBlob | undefined = img != null ? img : undefined;
-  const canvas = createPreviewCanvas(previewSize);
-  const context = checkExists(canvas.getContext('2d'), 'Failed to initialize a 2D Context');
-  const state: State = {
-    presetId,
-    options:
-      presetId != null
-        ? OptionsBuilder.fromHumanReadableOptions(checkExists(getPreset(presetId)).options)
-        : OptionsBuilder.create(),
+const { imageHelpers } = window.canva;
+canva.onReady(async ({ fullSizeImage, previewImage, image, presetId }) => {
+  setStyles();
+
+  const img = await loadCanvaBlob(checkExists(image, 'image must exist'));
+  let fullImg = fullSizeImage?.url != null ? await loadImageData(fullSizeImage.url) : img;
+  let previewImg = previewImage?.url != null ? await loadImageData(previewImage?.url) : img;
+
+  const state: State = { presetId };
+  const svgContainer = createSvgContainer();
+
+  const preview = async () => {
+    canva.toggleSpinner('preview', true);
+
+    if (previewImg != null) {
+      svgContainer.innerHTML = await imageDataToSVGAsync(previewImg, getPresetOptions(state.presetId));
+    }
+
+    canva.toggleSpinner('preview', false);
   };
 
-  if (previewImage != null) {
-    // Preview mode
-    previewImageURL = previewImage.url;
-  }
-
-  if (previewImageURL != null) {
-    displayPreview({
-      context,
-      preview: await renderPreview(previewImageURL, state.options),
-    });
-  }
-
   canva.onImageUpdate(async ({ image }) => {
-    fullImage = image;
-    previewImageURL = await imageHelpers.toDataUrl(image);
-    displayPreview({
-      context,
-      preview: await renderPreview(previewImageURL, state.options),
-    });
+    fullImg = await loadImageData(await imageHelpers.toDataUrl(image));
+    previewImg = fullImg;
+    await preview();
   });
 
   canva.onSaveRequest(async () => {
-    const fullSizeImage = checkExists(fullImage);
-
-    const svgString = await renderPreview(await imageHelpers.toDataUrl(fullSizeImage), state.options);
-    console.log('__svgString =', svgString);
+    const fullSizeImage = checkExists(fullImg, 'fullImg must exist');
+    const svgString = await imageDataToSVGAsync(previewImg, getPresetOptions(state.presetId));
 
     return {
       blob: new Blob([svgString], { type: 'image/svg+xml' }),
@@ -93,26 +136,21 @@ canva.onReady(async ({ fullSizeImage, previewImage, previewSize, presetId }) => 
   });
 
   canva.onPresetSelected(async ({ presetId }) => {
-    const preset = checkExists(getPreset(presetId), `Preset with id "${presetId}" is not found`);
-    state.options.update(OptionsBuilder.fromHumanReadableOptions(preset.options).build());
-
-    displayPreview({
-      context,
-      preview: await renderPreview(checkExists(previewImageURL, 'No preview image URL is specified'), state.options),
-    });
+    state.presetId = presetId;
+    await preview();
   });
 
-  const renderCustomControls = () => [<ControlName.COLOR_PICKER id="test" label="Test" color="#000000" />];
+  const renderCustomControls = () => [];
 
   const renderControls = () => {
     canva.updateControlPanel(renderCustomControls());
   };
 
   canva.onPresetsRequest(async ({ image }) => {
-    const url = await imageHelpers.toDataUrl(image);
+    const thumbnailImg = await loadCanvaBlob(image);
 
     const promises = presets.map(async (p) => {
-      const svgString = await renderPreview(url, OptionsBuilder.fromHumanReadableOptions(p.options));
+      const svgString = await imageDataToSVGAsync(thumbnailImg, getPresetOptions(state.presetId));
 
       return {
         id: p.id,
@@ -130,15 +168,6 @@ canva.onReady(async ({ fullSizeImage, previewImage, previewSize, presetId }) => 
     return Promise.all(promises);
   });
 
-  // canva.onControlsEvent(({ message: event }) => {
-  //   // Do notnhig
-  // });
-
-  canva.onViewportResize(async ({ size, commit }) => {
-    if (commit) {
-      setCanvasSize(canvas, size);
-    }
-  });
-
   renderControls();
+  await preview();
 });

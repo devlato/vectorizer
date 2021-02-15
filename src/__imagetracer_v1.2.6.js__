@@ -101,7 +101,7 @@ export default class ImageTracer {
       // Loop to trace each color layer
       for (let colornum = 0; colornum < ii.palette.length; colornum++) {
         // layeringstep -> pathscan -> internodes -> batchtracepaths
-        const tracedlayer = this.batchtracepaths(
+        const tracedlayer = this.batchtracepathss(
           this.internodes(
             this.pathscan(this.layeringstep(ii, colornum), options.pathomit),
 
